@@ -64,8 +64,9 @@ try
         Console.WriteLine("2. View all ideas");
         Console.WriteLine("3. Update idea");
         Console.WriteLine("4. Delete idea");
-        Console.WriteLine("5. Logout");
-        Console.WriteLine("6. Exit");
+        Console.WriteLine("5. Reorder all IDs");  // New option
+        Console.WriteLine("6. Logout");
+        Console.WriteLine("7. Exit");
         Console.Write("Select an option: ");
 
         var choice = Console.ReadLine();
@@ -91,6 +92,10 @@ try
                     break;
 
                 case "5":
+                    await ReorderAllIds(repository);
+                    break;
+
+                case "6":
                     Console.Write("Would you like to remove saved credentials? (y/n): ");
                     if (Console.ReadLine()?.ToLower() == "y")
                     {
@@ -99,7 +104,7 @@ try
                     }
                     return;
 
-                case "6":
+                case "7":
                     return;
 
                 default:
@@ -218,7 +223,6 @@ async Task UpdateIdea(IIdeaRepository repository)
         Console.WriteLine("(C)ancel - Cancel update");
         Console.WriteLine("(E)dit - Edit content");
         Console.WriteLine("(R)eidentify - Change idea ID");
-        Console.WriteLine("(O)rder - Reorder IDs");
         Console.Write("\nSelect an option: ");
 
         var choice = Console.ReadLine()?.ToLower();
@@ -265,11 +269,6 @@ async Task UpdateIdea(IIdeaRepository repository)
                     continue;
                 }
 
-            case "o":
-                await repository.ReorderIdsAsync();
-                Console.WriteLine("IDs reordered successfully");
-                return;
-
             default:
                 Console.WriteLine("Invalid option");
                 Console.WriteLine("Press Enter to continue...");
@@ -296,4 +295,26 @@ async Task DeleteIdea(IIdeaRepository repository)
     {
         Console.WriteLine(ex.Message);
     }
+}
+
+async Task ReorderAllIds(IIdeaRepository repository)
+{
+    Console.WriteLine("\nReorder IDs Operation");
+    Console.WriteLine("This will reorganize all idea IDs sequentially based on creation date.");
+    Console.WriteLine("For example:");
+    Console.WriteLine("Current IDs:  1, 2, 4, 7");
+    Console.WriteLine("New IDs:      1, 2, 3, 4");
+    Console.WriteLine("\nAre you sure you want to reorder all IDs? (y/n): ");
+
+    var response = Console.ReadLine()?.ToLower();
+    if (response != "y")
+    {
+        Console.WriteLine("Reorder operation cancelled.");
+        return;
+    }
+
+    await repository.ReorderIdsAsync();
+    Console.WriteLine("All IDs have been successfully reordered.");
+    Console.WriteLine("Press Enter to continue...");
+    Console.ReadLine();
 }

@@ -13,10 +13,29 @@ public class IdeaRepository : IIdeaRepository
         _context = context;
     }
 
+    private async Task<int> GetLowestAvailableIdAsync()
+    {
+        var allIds = await _context.Ideas.Select(i => i.Id).OrderBy(id => id).ToListAsync();
+
+        int lowestId = 1;
+        foreach (var id in allIds)
+        {
+            if (id != lowestId)
+            {
+                return lowestId;
+            }
+            lowestId++;
+        }
+        return lowestId;
+    }
+
     public async Task<Idea> CreateIdeaAsync(string content)
     {
+        var id = await GetLowestAvailableIdAsync();
+
         var idea = new Idea
         {
+            Id = id,
             Content = content,
             CreatedDate = DateTime.UtcNow,
             ModifiedDate = DateTime.UtcNow
