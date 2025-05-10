@@ -170,10 +170,6 @@ dotnet publish src/IdeaManagement/IdeaManagement.csproj --configuration Release 
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
-
 ## Acknowledgments
 
 - Entity Framework Core team
@@ -181,4 +177,4 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 - .NET community
 
 ---
-For issues and feature requests, please [open an issue](https://github.com/yourusername/idea-management/issues)
+For issues and feature requests, please [open an issue](https://github.com/blazermask/IdeaManagement/issues)
