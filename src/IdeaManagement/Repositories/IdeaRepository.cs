@@ -27,6 +27,21 @@ public class IdeaRepository : IIdeaRepository
         return idea;
     }
 
+    public async Task<Idea> CreateIdeaAsync(int id, string content)
+    {
+        var idea = new Idea
+        {
+            Id = id,
+            Content = content,
+            CreatedDate = DateTime.UtcNow,
+            ModifiedDate = DateTime.UtcNow
+        };
+
+        _context.Ideas.Add(idea);
+        await _context.SaveChangesAsync();
+        return idea;
+    }
+
     public async Task<List<Idea>> GetAllIdeasAsync()
     {
         return await _context.Ideas.ToListAsync();
@@ -55,6 +70,28 @@ public class IdeaRepository : IIdeaRepository
         if (idea == null) throw new KeyNotFoundException($"Idea with ID {id} not found");
 
         _context.Ideas.Remove(idea);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task ChangeIdeaIdAsync(int oldId, int newId)
+    {
+        var idea = await _context.Ideas.FindAsync(oldId);
+        if (idea == null) throw new KeyNotFoundException($"Idea with ID {oldId} not found");
+
+        var existingIdea = await _context.Ideas.FindAsync(newId);
+        if (existingIdea != null) throw new InvalidOperationException($"Idea with ID {newId} already exists");
+
+        idea.Id = newId;
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task ReorderIdsAsync()
+    {
+        var ideas = await _context.Ideas.OrderBy(i => i.CreatedDate).ToListAsync();
+        for (int i = 0; i < ideas.Count; i++)
+        {
+            ideas[i].Id = i + 1;
+        }
         await _context.SaveChangesAsync();
     }
 }

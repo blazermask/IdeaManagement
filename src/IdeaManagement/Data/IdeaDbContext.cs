@@ -7,7 +7,7 @@ public class IdeaDbContext : DbContext
 {
     public DbSet<Idea> Ideas { get; set; }
 
-    public IdeaDbContext(DbContextOptions<IdeaDbContext> options) 
+    public IdeaDbContext(DbContextOptions<IdeaDbContext> options)
         : base(options)
     {
     }
