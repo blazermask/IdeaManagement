@@ -122,7 +122,7 @@ static async Task RunProgram()
                         // Create new idea
                         var newIdea = await repository.CreateIdeaAsync(input);
                         Console.WriteLine($"Idea created with ID: {newIdea.Id}");
-                        break;
+                        return;
                 }
             }
         }
