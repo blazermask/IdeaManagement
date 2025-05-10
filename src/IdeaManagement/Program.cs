@@ -278,7 +278,6 @@ async Task UpdateIdea(IIdeaRepository repository)
         }
     }
 }
-
 async Task DeleteIdea(IIdeaRepository repository)
 {
     Console.Write("Enter idea ID to delete: ");

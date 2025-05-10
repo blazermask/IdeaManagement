@@ -15,6 +15,9 @@ public class IdeaDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Idea>()
+            .HasKey(i => i.Id);
+
+        modelBuilder.Entity<Idea>()
             .Property(i => i.Content)
             .IsRequired();
     }

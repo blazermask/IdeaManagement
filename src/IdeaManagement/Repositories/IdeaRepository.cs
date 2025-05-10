@@ -44,7 +44,7 @@ public class IdeaRepository : IIdeaRepository
 
     public async Task<List<Idea>> GetAllIdeasAsync()
     {
-        return await _context.Ideas.ToListAsync();
+        return await _context.Ideas.OrderBy(i => i.Id).ToListAsync();
     }
 
     public async Task<Idea?> GetIdeaByIdAsync(int id)
@@ -81,16 +81,65 @@ public class IdeaRepository : IIdeaRepository
         var existingIdea = await _context.Ideas.FindAsync(newId);
         if (existingIdea != null) throw new InvalidOperationException($"Idea with ID {newId} already exists");
 
-        idea.Id = newId;
+        // Create a new idea with the new ID
+        var newIdea = new Idea
+        {
+            Id = newId,
+            Content = idea.Content,
+            CreatedDate = idea.CreatedDate,
+            ModifiedDate = idea.ModifiedDate
+        };
+
+        // Remove the old idea and add the new one
+        _context.Ideas.Remove(idea);
+        _context.Ideas.Add(newIdea);
+
         await _context.SaveChangesAsync();
     }
 
     public async Task ReorderIdsAsync()
     {
         var ideas = await _context.Ideas.OrderBy(i => i.CreatedDate).ToListAsync();
-        for (int i = 0; i < ideas.Count; i++)
+        var tempList = ideas.Select(i => new
         {
-            ideas[i].Id = i + 1;
+            OldId = i.Id,
+            NewId = -i.Id, // Temporary negative ID to avoid conflicts
+            Idea = i
+        }).ToList();
+
+        // First pass: set temporary negative IDs
+        foreach (var item in tempList)
+        {
+            var idea = await _context.Ideas.FindAsync(item.OldId);
+            if (idea != null)
+            {
+                _context.Ideas.Remove(idea);
+                _context.Ideas.Add(new Idea
+                {
+                    Id = item.NewId,
+                    Content = idea.Content,
+                    CreatedDate = idea.CreatedDate,
+                    ModifiedDate = idea.ModifiedDate
+                });
+            }
+        }
+        await _context.SaveChangesAsync();
+
+        // Second pass: set final IDs
+        for (int i = 0; i < tempList.Count; i++)
+        {
+            var idea = await _context.Ideas.FindAsync(tempList[i].NewId);
+            if (idea != null)
+            {
+                _context.Ideas.Remove(idea);
+                _context.Ideas.Add(new Idea
+                {
+                    Id = i + 1,
+                    Content = idea.Content,
+                    CreatedDate = idea.CreatedDate,
+                    ModifiedDate = idea.ModifiedDate
+                });
+            }
         }
         await _context.SaveChangesAsync();
     }
