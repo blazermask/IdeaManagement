@@ -4,6 +4,7 @@ using IdeaManagement.Repositories;
 using IdeaManagement.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text;
 
 await RunProgram();
 
@@ -221,7 +222,7 @@ static DatabaseCredentials PromptForCredentials()
     var username = Console.ReadLine() ?? "";
 
     Console.Write("Password: ");
-    var password = Console.ReadLine() ?? "";
+    var password = ReadPassword();
 
     return new DatabaseCredentials
     {
@@ -231,6 +232,31 @@ static DatabaseCredentials PromptForCredentials()
         Username = username,
         Password = password
     };
+}
+
+static string ReadPassword()
+{
+    var password = new StringBuilder();
+    while (true)
+    {
+        var keyInfo = Console.ReadKey(intercept: true);
+        if (keyInfo.Key == ConsoleKey.Enter)
+        {
+            Console.WriteLine();
+            break;
+        }
+        else if (keyInfo.Key == ConsoleKey.Backspace && password.Length > 0)
+        {
+            password.Length--;
+            Console.Write("\b \b");
+        }
+        else if (!char.IsControl(keyInfo.KeyChar))
+        {
+            password.Append(keyInfo.KeyChar);
+            Console.Write("*");
+        }
+    }
+    return password.ToString();
 }
 
 static async Task CreateIdea(IIdeaRepository repository)
