@@ -1,6 +1,3 @@
-Here's a comprehensive README.md for the project:
-
-
 # Idea Management System
 
 A console application for managing ideas with persistent storage in MySQL database and secure credential management.
@@ -36,6 +33,9 @@ Database Setup
 - CREATE, ALTER, DROP (for table management)
 - SELECT, INSERT, UPDATE, DELETE (for data operations)
 
+Building the Application
+
+``dotnet publish src/IdeaManagement/IdeaManagement.csproj --configuration Release --runtime win-x64 --self-contained true --output "..\..\dist" -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=embedded``
 
 Running the Application
 
