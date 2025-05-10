@@ -130,39 +130,6 @@ Security Features
 - Error handling for security issues
 
 
-Common Operations
-
-Creating an Idea
-
-Enter your idea: My new idea
-Idea created with ID: 1
-
-
-Updating an Idea
-
-Enter idea ID to update: 1
-Current idea details:
-ID: 1
-Content: My new idea
-Created: [timestamp]
-Modified: [timestamp]
-
-Options:
-(C)ancel - Cancel update
-(E)dit - Edit content
-(R)eidentify - Change idea ID
-
-
-Reordering IDs
-
-Reorder IDs Operation
-This will reorganize all idea IDs sequentially based on their current order.
-For example:
-Current IDs:  1, 2, 4, 7
-New IDs:      1, 2, 3, 4
-
-Are you sure you want to reorder all IDs? (y/n):
-
 
 Error Handling
 • Database connection failures
