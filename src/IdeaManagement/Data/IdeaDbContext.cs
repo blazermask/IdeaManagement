@@ -14,11 +14,26 @@ public class IdeaDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Idea>()
-            .HasKey(i => i.Id);
+        modelBuilder.Entity<Idea>(entity =>
+        {
+            entity.ToTable("Ideas");
 
-        modelBuilder.Entity<Idea>()
-            .Property(i => i.Content)
-            .IsRequired();
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedOnAdd();
+
+            entity.Property(e => e.Content)
+                .IsRequired()
+                .HasMaxLength(1000);
+
+            entity.Property(e => e.CreatedDate)
+                .IsRequired()
+                .HasColumnType("datetime");
+
+            entity.Property(e => e.ModifiedDate)
+                .IsRequired()
+                .HasColumnType("datetime");
+        });
     }
 }

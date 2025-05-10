@@ -5,58 +5,138 @@ using IdeaManagement.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-var credentialManager = new DatabaseCredentialManager();
-DatabaseCredentials? credentials = null;
+await RunProgram();
 
-// Try to load saved credentials
-var savedCredentials = credentialManager.LoadCredentials();
-if (savedCredentials != null)
+static async Task RunProgram()
 {
-    Console.WriteLine("Found saved credentials. Attempting automatic login...");
-    credentials = savedCredentials;
-}
+    bool forceManualLogin = false;
 
-// If no saved credentials or user wants to login manually
-if (credentials == null)
-{
-    credentials = PromptForCredentials();
-}
-
-var services = new ServiceCollection();
-
-try
-{
-    // Configure services with the provided credentials
-    services.AddDbContext<IdeaDbContext>(options =>
-        options.UseMySql(
-            credentials.GetConnectionString(),
-            new MySqlServerVersion(new Version(8, 0, 0))
-        ));
-
-    services.AddScoped<IIdeaRepository, IdeaRepository>();
-
-    var serviceProvider = services.BuildServiceProvider();
-
-    // Test the connection
-    using (var scope = serviceProvider.CreateScope())
+    while (true) // Main program loop
     {
-        var context = scope.ServiceProvider.GetRequiredService<IdeaDbContext>();
-        await context.Database.EnsureCreatedAsync();
-    }
+        var credentialManager = new DatabaseCredentialManager();
+        DatabaseCredentials? credentials = null;
 
-    // If connection successful and credentials weren't saved, ask to save
-    if (savedCredentials == null)
-    {
-        Console.Write("Would you like to save these credentials? (y/n): ");
-        if (Console.ReadLine()?.ToLower() == "y")
+        // Try to load saved credentials only if not forcing manual login
+        if (!forceManualLogin)
         {
-            credentialManager.SaveCredentials(credentials);
-            Console.WriteLine("Credentials saved successfully.");
+            var savedCredentials = credentialManager.LoadCredentials();
+            if (savedCredentials != null)
+            {
+                Console.WriteLine("Found saved credentials. Attempting automatic login...");
+                credentials = savedCredentials;
+            }
+        }
+
+        // If no saved credentials or forcing manual login
+        if (credentials == null || forceManualLogin)
+        {
+            credentials = PromptForCredentials();
+        }
+
+        forceManualLogin = false; // Reset the flag
+
+        var services = new ServiceCollection();
+
+        try
+        {
+            // Configure services with the provided credentials
+            services.AddDbContext<IdeaDbContext>(options =>
+                options.UseMySql(
+                    credentials.GetConnectionString(),
+                    new MySqlServerVersion(new Version(8, 0, 0))
+                ));
+
+            services.AddScoped<IIdeaRepository, IdeaRepository>();
+
+            var serviceProvider = services.BuildServiceProvider();
+
+            // Test the connection and ensure database is created
+            using (var scope = serviceProvider.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<IdeaDbContext>();
+
+                // This will create the database and tables if they don't exist
+                await context.Database.EnsureCreatedAsync();
+
+                // Create and then delete an initial idea to ensure the table is properly created
+                if (!await context.Ideas.AnyAsync())
+                {
+                    var initialIdea = new Idea
+                    {
+                        Content = "Initial idea",
+                        CreatedDate = DateTime.UtcNow,
+                        ModifiedDate = DateTime.UtcNow
+                    };
+                    context.Ideas.Add(initialIdea);
+                    await context.SaveChangesAsync();
+
+                    // Delete the initial idea
+                    context.Ideas.Remove(initialIdea);
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            // If connection successful and credentials weren't saved, ask to save
+
+
+            // If connection successful and credentials weren't saved, ask to save
+            if (!forceManualLogin && !credentialManager.CredentialsExist())
+            {
+                Console.Write("Would you like to save these credentials? (y/n): ");
+                if (Console.ReadLine()?.ToLower() == "y")
+                {
+                    credentialManager.SaveCredentials(credentials);
+                    Console.WriteLine("Credentials saved successfully.");
+                }
+            }
+
+            var repository = serviceProvider.GetRequiredService<IIdeaRepository>();
+
+            bool shouldLogout = false;
+
+            // Start with idea creation mode
+            while (!shouldLogout)
+            {
+                Console.WriteLine("\nEnter your idea (type 'EDIT' for main menu, 'EXIT' to close program):");
+                var input = Console.ReadLine();
+
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    Console.WriteLine("Idea content cannot be empty");
+                    continue;
+                }
+
+                switch (input.ToUpper())
+                {
+                    case "EDIT":
+                        // Enter main menu
+                        var (shouldExit, shouldForceLogin) = await RunMainMenu(repository, credentialManager);
+                        shouldLogout = shouldExit;
+                        forceManualLogin = shouldForceLogin;
+                        break;
+
+                    case "EXIT":
+                        return; // Exit program
+
+                    default:
+                        // Create new idea
+                        var newIdea = await repository.CreateIdeaAsync(input);
+                        Console.WriteLine($"Idea created with ID: {newIdea.Id}");
+                        break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to connect to database: {ex.Message}");
+            Console.WriteLine("Press Enter to retry login...");
+            Console.ReadLine();
         }
     }
+}
 
-    var repository = serviceProvider.GetRequiredService<IIdeaRepository>();
-
+static async Task<(bool shouldExit, bool forceLogin)> RunMainMenu(IIdeaRepository repository, DatabaseCredentialManager credentialManager)
+{
     while (true)
     {
         Console.WriteLine("\nIdea Management System");
@@ -64,9 +144,10 @@ try
         Console.WriteLine("2. View all ideas");
         Console.WriteLine("3. Update idea");
         Console.WriteLine("4. Delete idea");
-        Console.WriteLine("5. Reorder all IDs");  // New option
-        Console.WriteLine("6. Logout");
-        Console.WriteLine("7. Exit");
+        Console.WriteLine("5. Reorder all IDs");
+        Console.WriteLine("6. Remove all ideas");  // New option
+        Console.WriteLine("7. Logout");
+        Console.WriteLine("8. Exit");
         Console.Write("Select an option: ");
 
         var choice = Console.ReadLine();
@@ -96,16 +177,21 @@ try
                     break;
 
                 case "6":
+                    await RemoveAllIdeas(repository);
+                    break;
+
+                case "7":
                     Console.Write("Would you like to remove saved credentials? (y/n): ");
                     if (Console.ReadLine()?.ToLower() == "y")
                     {
                         credentialManager.RemoveCredentials();
                         Console.WriteLine("Credentials removed successfully.");
                     }
-                    return;
+                    return (true, true); // Exit and force manual login
 
-                case "7":
-                    return;
+                case "8":
+                    Environment.Exit(0); // Exit program
+                    break;
 
                 default:
                     Console.WriteLine("Invalid option");
@@ -118,13 +204,8 @@ try
         }
     }
 }
-catch (Exception ex)
-{
-    Console.WriteLine($"Failed to connect to database: {ex.Message}");
-    return;
-}
 
-DatabaseCredentials PromptForCredentials()
+static DatabaseCredentials PromptForCredentials()
 {
     Console.WriteLine("Database Login");
     Console.Write("Server: ");
@@ -152,7 +233,7 @@ DatabaseCredentials PromptForCredentials()
     };
 }
 
-async Task CreateIdea(IIdeaRepository repository)
+static async Task CreateIdea(IIdeaRepository repository)
 {
     Console.Write("Enter your idea: ");
     var content = Console.ReadLine();
@@ -165,7 +246,7 @@ async Task CreateIdea(IIdeaRepository repository)
     Console.WriteLine($"Idea created with ID: {newIdea.Id}");
 }
 
-async Task ViewAllIdeas(IIdeaRepository repository)
+static async Task ViewAllIdeas(IIdeaRepository repository)
 {
     var ideas = await repository.GetAllIdeasAsync();
     if (!ideas.Any())
@@ -183,7 +264,7 @@ async Task ViewAllIdeas(IIdeaRepository repository)
     }
 }
 
-async Task UpdateIdea(IIdeaRepository repository)
+static async Task UpdateIdea(IIdeaRepository repository)
 {
     Console.Write("Enter idea ID to update: ");
     if (!int.TryParse(Console.ReadLine(), out int id))
@@ -277,7 +358,8 @@ async Task UpdateIdea(IIdeaRepository repository)
         }
     }
 }
-async Task DeleteIdea(IIdeaRepository repository)
+
+static async Task DeleteIdea(IIdeaRepository repository)
 {
     Console.Write("Enter idea ID to delete: ");
     if (!int.TryParse(Console.ReadLine(), out int id))
@@ -297,10 +379,10 @@ async Task DeleteIdea(IIdeaRepository repository)
     }
 }
 
-async Task ReorderAllIds(IIdeaRepository repository)
+static async Task ReorderAllIds(IIdeaRepository repository)
 {
     Console.WriteLine("\nReorder IDs Operation");
-    Console.WriteLine("This will reorganize all idea IDs sequentially based on creation date.");
+    Console.WriteLine("This will reorganize all idea IDs sequentially based on their current order.");
     Console.WriteLine("For example:");
     Console.WriteLine("Current IDs:  1, 2, 4, 7");
     Console.WriteLine("New IDs:      1, 2, 3, 4");
@@ -315,6 +397,34 @@ async Task ReorderAllIds(IIdeaRepository repository)
 
     await repository.ReorderIdsAsync();
     Console.WriteLine("All IDs have been successfully reordered.");
+    Console.WriteLine("Press Enter to continue...");
+    Console.ReadLine();
+}
+
+static async Task RemoveAllIdeas(IIdeaRepository repository)
+{
+    Console.WriteLine("\nRemove All Ideas");
+    Console.WriteLine("This will permanently delete ALL ideas from the database.");
+    Console.WriteLine("This action cannot be undone!");
+    Console.Write("\nAre you sure you want to remove all ideas? (yes/no): ");
+
+    var response = Console.ReadLine()?.ToLower();
+    if (response != "yes")
+    {
+        Console.WriteLine("Operation cancelled.");
+        return;
+    }
+
+    Console.Write("\nPlease type 'CONFIRM' to proceed: ");
+    var confirmation = Console.ReadLine();
+    if (confirmation != "CONFIRM")
+    {
+        Console.WriteLine("Operation cancelled.");
+        return;
+    }
+
+    await repository.RemoveAllIdeasAsync();
+    Console.WriteLine("All ideas have been successfully removed.");
     Console.WriteLine("Press Enter to continue...");
     Console.ReadLine();
 }

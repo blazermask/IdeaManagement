@@ -1,3 +1,4 @@
+// IIdeaRepository.cs
 using IdeaManagement.Models;
 
 namespace IdeaManagement.Repositories;
@@ -12,4 +13,6 @@ public interface IIdeaRepository
     Task DeleteIdeaAsync(int id);
     Task ChangeIdeaIdAsync(int oldId, int newId);
     Task ReorderIdsAsync();
+    Task RemoveAllIdeasAsync();
+
 }

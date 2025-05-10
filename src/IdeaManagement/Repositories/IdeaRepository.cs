@@ -115,10 +115,15 @@ public class IdeaRepository : IIdeaRepository
 
         await _context.SaveChangesAsync();
     }
+    public async Task RemoveAllIdeasAsync()
+    {
+        _context.Ideas.RemoveRange(_context.Ideas);
+        await _context.SaveChangesAsync();
+    }
 
     public async Task ReorderIdsAsync()
     {
-        var ideas = await _context.Ideas.OrderBy(i => i.CreatedDate).ToListAsync();
+        var ideas = await _context.Ideas.OrderBy(i => i.Id).ToListAsync();
         var tempList = ideas.Select(i => new
         {
             OldId = i.Id,
