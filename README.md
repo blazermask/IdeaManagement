@@ -1,154 +1,184 @@
 # Idea Management System
 
-A console application for managing ideas with persistent storage in MySQL database and secure credential management.
+A console application for managing ideas with MySQL database storage and secure Windows credential management.
 
 ## Features
 
-- Secure database credential management using Windows Credential Manager
-- Automatic login with saved credentials
-- CRUD operations for ideas
-- ID management with automatic lowest ID assignment
-- ID reordering functionality
-- Complete test suite with in-memory and real database testing options
+- 🔐 Secure database credential management using Windows Credential Manager
+- 🔄 Automatic login with saved credentials
+- 📝 CRUD operations for ideas
+- 🔢 Automatic ID management with lowest available ID assignment
+- 🔄 ID reordering functionality
+- 🎯 Single executable deployment
 
 ## Prerequisites
 
-- .NET 8.0 SDK
+- [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - MySQL Server 8.0 or higher
 - Windows OS (for Credential Manager functionality)
-
 
 ## Installation
 
 1. Clone the repository
-2. Navigate to the project directory
-3. Restore dependencies:
+```bash
+git clone https://github.com/yourusername/idea-management.git
+cd idea-management
+```
 
-dotnet restore
+2. Build the project
+```bash
+dotnet publish src/IdeaManagement/IdeaManagement.csproj --configuration Release --runtime win-x64 --self-contained true --output "dist" -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=embedded
+```
 
+The executable will be created in the `dist` folder.
 
-Database Setup
-1. Create a MySQL database
-2. Ensure your MySQL user has the following permissions:
-- CREATE, ALTER, DROP (for table management)
-- SELECT, INSERT, UPDATE, DELETE (for data operations)
+## Usage
 
-Building the Application
+### First Run
+1. Run `IdeaManagement.exe` from the dist folder
+2. Enter your database credentials:
+   - Server
+   - Port
+   - Database name
+   - Username
+   - Password
+3. Choose whether to save credentials securely
 
-``dotnet publish src/IdeaManagement/IdeaManagement.csproj --configuration Release --runtime win-x64 --self-contained true --output "..\..\dist" -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=embedded``
+### Main Features
 
-Running the Application
-
-cd src/IdeaManagement
-dotnet run
-
-
-First Run
-1. You'll be prompted for database credentials:
-- Server
-- Port
-- Database name
-- Username
-- Password
-2. Option to save credentials securely
-3. Application will create necessary database tables
-
-
-Main Features
-1. **Idea Creation Mode** (Default)
+#### Quick Idea Creation Mode (Default)
 - Enter idea content directly
 - Type 'EDIT' to access main menu
 - Type 'EXIT' to close program
 
-2. **Main Menu Options**
-- Create new idea
-- View all ideas
-- Update idea
-- Delete idea
-- Reorder all IDs
-- Remove all ideas
-- Logout
-- Exit
+#### Main Menu Options
+1. Create new idea
+2. View all ideas
+3. Update idea
+4. Delete idea
+5. Reorder all IDs
+6. Remove all ideas
+7. Logout
+8. Exit
 
+## Common Operations
 
-Special Features
-1. **ID Management**
-- Automatic lowest available ID assignment
-- Manual ID assignment option
-- ID reordering functionality
-- ID change capability
+### Creating an Idea
+```
+Enter your idea: My new idea
+Idea created with ID: 1
+```
 
-2. **Update Options**
-- Edit content
-- Change ID
-- Cancel operation
+### Updating an Idea
+```
+Enter idea ID to update: 1
+Current idea details:
+ID: 1
+Content: My new idea
+Created: [timestamp]
+Modified: [timestamp]
 
-3. **Credential Management**
-- Secure credential storage
-- Automatic login
-- Option to remove saved credentials
+Options:
+(C)ancel - Cancel update
+(E)dit - Edit content
+(R)eidentify - Change idea ID
+```
 
+### Reordering IDs
+```
+Reorder IDs Operation
+This will reorganize all idea IDs sequentially.
+Example:
+Current IDs:  1, 2, 4, 7
+New IDs:      1, 2, 3, 4
+```
 
-Testing
+## Security Features
 
-Running Tests with In-Memory Database
+- Secure credential storage using Windows Credential Manager
+- Hidden password input
+- Encrypted credential storage
+- Secure credential removal option
 
-cd tests/IdeaManagement.Tests
-dotnet test
+## Error Handling
 
+The application handles:
+- Database connection failures
+- Invalid input
+- Duplicate IDs
+- Missing records
+- Credential management errors
 
-Running Tests with Real Database
+## Best Practices
 
-dotnet test -- --connection="server=localhost;port=3306;database=test_db;user=test_user;password=test_pass"
-
-
-Technical Details
-
-Dependencies
-• Microsoft.EntityFrameworkCore (8.0.3)
-• Microsoft.EntityFrameworkCore.Design (8.0.3)
-• Microsoft.EntityFrameworkCore.Tools (8.0.3)
-• Pomelo.EntityFrameworkCore.MySql (8.0.0)
-
-
-Test Dependencies
-• Microsoft.EntityFrameworkCore.InMemory (8.0.3)
-• Microsoft.NET.Test.Sdk (17.8.0)
-• xunit (2.7.0)
-• Moq (4.20.70)
-
-
-Security Features
-1. **Credential Storage**
-- Uses Windows Credential Manager
-- Encrypted storage
-- Secure credential removal
-
-2. **Database Security**
-- Parameterized queries
-- Connection string protection
-- Error handling for security issues
-
-
-
-Error Handling
-• Database connection failures
-• Invalid input validation
-• Duplicate ID handling
-• Missing record handling
-• Credential management errors
-
-
-Best Practices
-1. Always use the logout option instead of directly closing the application
+1. Always use the logout option instead of directly closing
 2. Regularly backup your database
 3. Keep track of your database credentials
 4. Test new features in a test database first
 
+## Project Structure
 
-Contributing
+```
+IdeaManagement/
+├── src/
+│   └── IdeaManagement/
+│       ├── Models/
+│       │   ├── DatabaseCredentials.cs
+│       │   └── Idea.cs
+│       ├── Data/
+│       │   └── IdeaDbContext.cs
+│       ├── Repositories/
+│       │   ├── IIdeaRepository.cs
+│       │   └── IdeaRepository.cs
+│       ├── Services/
+│       │   └── DatabaseCredentialManager.cs
+│       ├── GlobalUsings.cs
+│       ├── Program.cs
+│       └── IdeaManagement.csproj
+└── tests/
+    └── IdeaManagement.Tests/
+        ├── IdeaRepositoryTests.cs
+        └── TestHelper.cs
+```
+
+## Development
+
+### Building for Development
+```bash
+dotnet build
+```
+
+### Running Tests
+```bash
+dotnet test
+```
+
+### Building Release Version
+```bash
+# Clean previous builds
+rmdir /s /q "dist"
+
+# Create distribution
+dotnet publish src/IdeaManagement/IdeaManagement.csproj --configuration Release --runtime win-x64 --self-contained true --output "dist" -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=embedded
+```
+
+## Contributing
+
 1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+
+## Acknowledgments
+
+- Entity Framework Core team
+- MySQL team
+- .NET community
+
+---
+For issues and feature requests, please [open an issue](https://github.com/yourusername/idea-management/issues)
