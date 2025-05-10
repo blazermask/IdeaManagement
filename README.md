@@ -20,38 +20,13 @@ A console application for managing ideas with persistent storage in MySQL databa
 - MySQL Server 8.0 or higher
 - Windows OS (for Credential Manager functionality)
 
-## Project Structure
-
-
-IdeaManagement/
-├── src/
-│   └── IdeaManagement/
-│       ├── Models/
-│       │   ├── DatabaseCredentials.cs
-│       │   └── Idea.cs
-│       ├── Data/
-│       │   └── IdeaDbContext.cs
-│       ├── Repositories/
-│       │   ├── IIdeaRepository.cs
-│       │   └── IdeaRepository.cs
-│       ├── Services/
-│       │   └── DatabaseCredentialManager.cs
-│       ├── GlobalUsings.cs
-│       ├── Program.cs
-│       └── IdeaManagement.csproj
-└── tests/
-    └── IdeaManagement.Tests/
-        ├── IdeaRepositoryTests.cs
-        ├── TestHelper.cs
-        └── IdeaManagement.Tests.csproj
-
 
 ## Installation
 
 1. Clone the repository
 2. Navigate to the project directory
 3. Restore dependencies:
-```bash
+
 dotnet restore
 
 
